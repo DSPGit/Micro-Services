@@ -77,5 +77,8 @@ So here Zuul will be the interface which will handle all the responsibilities i.
           </parent>
   5. you can then go ahead and provide the required artifacts in the dependencies.
   6. once you add the required dependencies you have to use ***@AutoConfiguration*** annotation in the class
-  7. 
+  
+  ### How spring boot works:
+    Read bean post processor
+    
        
