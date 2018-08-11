@@ -51,6 +51,7 @@ S1 ---> Eureka (DS)
 
 **Exposing internal services to external services**
 No external service should be able to access my service architecture hence we should be having a proxy interface which will call the service on behalf of us. To acheive this there is a third party service provided by netflix **ZUUL**
+````
 Example:
 ES (external service) wants to make a call to (your internal service) S2:
 ES --> Netflix Zuul ---> Eureka (DS) 
@@ -58,7 +59,7 @@ ES --> Netflix Zuul ---> Eureka (DS)
   Zuul ---> Ribbon (LB)
   Zuul ---> HYSTRIX --> S2
 So here Zuul will be the interface which will handle all the responsibilities i.e. LB, DS and calling the target service.
-
+````
 **Having configuration of all the services on single server**
   
 ## SPRING BOOT for implementing microservices
