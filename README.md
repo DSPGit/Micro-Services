@@ -79,6 +79,7 @@ So here Zuul will be the interface which will handle all the responsibilities i.
   6. once you add the required dependencies you have to use ***@AutoConfiguration*** annotation in the class
   
   ### How spring boot works:
-    Read bean post processor
+   1. Read bean post processor (life cycle of spring bean)
+   2. 
     
        
