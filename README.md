@@ -2,7 +2,8 @@
 Synechron Training for Java Microservices.
 
 Day1:
-For resources visit: http://resources.way2learnonline.com/micro/ (Commited lab-docs-pdf-jan2018.zip and micro-ws-may2018.zip)
+For resources visit: 
+* [LAB RESOURCES] (http://resources.way2learnonline.com/micro/) (Commited lab-docs-pdf-jan2018.zip and micro-ws-may2018.zip)
 
 ## Monolithic Applications VS Micro-services
 ### Monolithic Applications: One single appn having everything is called as monolithic appn
