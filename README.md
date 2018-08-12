@@ -102,11 +102,11 @@ So here Zuul will be the interface which will handle all the responsibilities i.
   **Problem statement:**  I want to write an appn which is cloud independent: i.e I can switch within clouds without changing code?
   **Solution:** ***Spring cloud*** provides set of interfaces which have implementors of Heruko, Cloud platform etc. Just change the dependency in spring boot and the required beans will be created.
   
-  ## SPRING CLOUD
+# SPRING CLOUD
   - Its a library which can be deployed on PaaS
   - Its a big umbrella which has different projects like Eureka, ribbons, etc.
   
-  ## How to start Eureka:
+## How to start Eureka:
   - Eureka is just an REST api.
   - Spring cloud eureka is developed on top of spring boot, hence boot will add all the beans for you once you add the dependency
   - Spring boot parent doesnt have dependecy versions for spirng cloud api's hence we need to have different parent for spring cloud but we cannot have multiple parents in one pom so we add the cloud parent in <dependencyManagement> like below: 
@@ -140,9 +140,68 @@ So here Zuul will be the interface which will handle all the responsibilities i.
     </dependency>
 </dependencies>
 ````
-Please make sure you have correct compatibilty version of sprint boot parent and spring cloud.
+***Note:*** Please make sure you have correct compatibilty version of sprint boot parent and spring cloud.
 
-    
-  
-    
-       
+- After which just use ***@EnableEurekaServer*** annotation in main class and run, the annotation enables all eureka rest controllers
+- this above annotation will bring all the required beans on client side
+- **default port of eureka is 8761**
+- By default behavior of eureka is that it will first fetch the registry from other eureka server, if you have only one ES then you need to override the default behavior by adding a property in application.yml
+````
+eureka:
+  client:
+    fetch-registry: false // no other ES hence value false
+    register-with-eureka: false //there is no other ES to register with hence false; even if you have multiple ES but dont want to register
+````
+- every service needs to register with the ES hence we need to add below code in application.yml of your service
+````
+eureka:
+  client:
+    service-url:
+      z1: http://localhost:5001/eureka
+````
+- how many eureka are there with the zones? configure this.
+````
+eureka:
+  client:
+    service-url:
+      z1: http://localhost:5001/eureka
+````
+- If we have no zones then use below:
+````
+eureka:
+  client:
+    service-url: 
+      defaultZone: http://localhost:5001/eureka
+````
+- By default the service will start on port 8080, but if the port is not available then we can add below code in yaml
+````
+server:
+  port: 0 //0 means any random port available
+````
+- if you want to have multiple instance of services then the application id is generated based on combination of
+  **host:service-name:port**
+- this will make the id of the 2 service instances same, and eureka will show only one service in dashboard; hence you need to have different ids we need to make below changes: this code will generate random ids for each instance of service
+````
+eureka:
+  instance:
+    instance-id:${spring.application.name}:${random.value}
+````
+**Note:** To monitor the id of the services once you start the service check the (TCP/IP Monitor) in eclipse
+
+- In lease renewal: if the ES doesnt get the service reneval after its lease is expired it keeps on checking service and if 70% of the services dont renew (or dont provide heartbeat)then ES will go in **self preservation mode** and it will wake up automatically once it starts getting heartbeats.
+- This threshold of 70% is set by Netflix and is not configurable.
+- we can disable self preservation mode by using:
+````
+eureka:
+  server:
+    enable-self-preservation: false
+````
+- **eviction thread** runs every 60 seconds
+- when the service isnt giving heartbeat then ES wont remove it immediately from registry but will be marked for **eviction** then the eviction thread which runs after 60s will remove it in the next round of eviction. so the service gets max of 150s (90s of heartbeat and 60s of eviction thread)
+***Open Q***  after eviction if the service tries to send the ES its heartbeat what happens, as the srvice is removed from registry ??
+
+### Steps to start/configure the eureka client
+- Step 1: Add dependency of eureka-client
+- Step 2: Add annotation @EnableEurekaServer in the main class
+
+
