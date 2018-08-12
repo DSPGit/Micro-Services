@@ -103,7 +103,46 @@ So here Zuul will be the interface which will handle all the responsibilities i.
   **Solution:** ***Spring cloud*** provides set of interfaces which have implementors of Heruko, Cloud platform etc. Just change the dependency in spring boot and the required beans will be created.
   
   ## SPRING CLOUD
-    Its a big umbrella which has different projects like Eureka, ribbons, etc.
+  - Its a library which can be deployed on PaaS
+  - Its a big umbrella which has different projects like Eureka, ribbons, etc.
+  
+  ## How to start Eureka:
+  - Eureka is just an REST api.
+  - Spring cloud eureka is developed on top of spring boot, hence boot will add all the beans for you once you add the dependency
+  - Spring boot parent doesnt have dependecy versions for spirng cloud api's hence we need to have different parent for spring cloud but we cannot have multiple parents in one pom so we add the cloud parent in <dependencyManagement> like below: 
+* [Spring cloud](http://projects.spring.io/spring-cloud/)
+
+````
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.0.1.RELEASE</version>
+</parent>
+<dependencyManagement>
+    ***<dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>Finchley.SR1</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>***
+</dependencyManagement>
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+</dependencies>
+````
+Please make sure you have correct compatibilty version of sprint boot parent and spring cloud.
+
+    
   
     
        
