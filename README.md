@@ -80,6 +80,30 @@ So here Zuul will be the interface which will handle all the responsibilities i.
   
   ### How spring boot works:
    1. Read bean post processor (life cycle of spring bean)
-   2. 
+   
+# DAY 2 : REST/EUREKA/RIBBON
+## CLOUD
+  1. What is CLoud?
+    - **SaaS**
+      . SAP
+      . Source Fourge
+    - **PaaS**
+      . Pivotal Cloud foundry
+      . Heroku
+    - **IaaS**
+      . AWS
+      . Google Cloud Platform
+      . Azure
+  - Whatever is not yours is with cloud. 
+  - If we use IaaS : we just get the plain OS infrastructure and if I want to run a WAR on it we have to configure all the pre-requisite
+  - If we use PaaS : we just have to say we want to run WAR then all the pre-requisite are handled by Platform
+  - In SaaS : all the code is ready we just have to configure.
+  
+  **Problem statement:**  I want to write an appn which is cloud independent: i.e I can switch within clouds without changing code?
+  **Solution:** ***Spring cloud*** provides set of interfaces which have implementors of Heruko, Cloud platform etc. Just change the dependency in spring boot and the required beans will be created.
+  
+  ## SPRING CLOUD
+    Its a big umbrella which has different projects like Eureka, ribbons, etc.
+  
     
        
