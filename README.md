@@ -204,4 +204,47 @@ eureka:
 - Step 1: Add dependency of eureka-client
 - Step 2: Add annotation @EnableEurekaServer in the main class
 
+# DAY 3 : RIBBON
+- Ribbon is used as load balancer
+- Ribbon by default uses DynamicServerListLoadBalancer for load balancing which can be configured
+- To simplify code we can use restTemplate with **interceptors**
+````
+Use @LoadBalancer annotation
+````
+- if one of the service replica is down then the loadbalancer keeps on hitting the lost one and the alive ones alternatively and the response we get from lost service is 404, to avoid this our loadbalancer should keep on retrying and not show 404, ***Spring provides one api called SPRING RETRY*** 
+````
+<dependency>
+    <groupId>org.springframework.retry</groupId>
+    <artifactId>spring-retry</artifactId>
+    <version>1.1.5.RELEASE</version>
+</dependency>
+````
+- Spring retry api inbuilt uses DynamicServerListLoadBalancer (which is configurable) and if the service is down then it will lookup the registry and hit the live service. The retry and timeout is configurable as below:
+````
+spring:
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+````
+-  you can configure the no. of retry's for a specifc service using below config:
+````
+quotes-service: //this is the name of the service
+  ribbon:
+    ReadTimeout: 1000 // server is up, connection is successful but server is not responding in specified time, in our case its 1sec
+    ConnectTimeout: 1000 // htpp request connection timeout
+    OkToRetryOnAllOperations: true
+    MaxAutoRetriesNextServer: 2
+    MaxAutoRetries: 2 // max no. of autotries on particular service instance
+````
+### Algorithms in load balancing
+- **ILoadBalancer >> Interface**: [Link](https://github.com/Netflix/ribbon/blob/master/ribbon-loadbalancer/src/main/java/com/netflix/loadbalancer/ILoadBalancer.java)  
+- one of the implementor of this interface is **DynamicServerListLoadBalancer** which has a method ***getServerListImpl*** this will return list of all the services irrespective of the zones, to get only the services present in its zones we use another implementor of this interface which is **ZoneAwareLoadBalancer**
 
+- Another interface is there which is **IRule >> Interface**: [Link](https://netflix.github.io/ribbon/ribbon-core-javadoc/com/netflix/loadbalancer/IRule.html)
+- IRule intern uses ILoadBalancer : check method ***setLoadBalancer(ILoadBalancer lb)***
+  - There is an implementor of this interface namely **RoundRobinRule** this uses round robin algorthm to choose the service
+  - There is a child of **RoundRobinRule** namely **WeightedResponseTimeRule** this implementor will assign weights to the services based on the avg response time and based on that round-robin logic will run to choose the service.
+
+- By default spring boot uses **DynamicServerListLoadBalancer** if we dont want this then we can write our own child class and override the implementation 
+  
