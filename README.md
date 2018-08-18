@@ -248,3 +248,44 @@ quotes-service: //this is the name of the service
 
 - By default spring boot uses **DynamicServerListLoadBalancer** if we dont want this then we can write our own child class and override the implementation 
   
+### Hystrix (for Circuit breaking)
+- Spring has ***spring-cloud-hystrix*** a wrapper around Netflix Hystrix
+  - Step 1: just add the dependency in pom
+  - Step 2: Annotation ***@EnableHystrix***
+  - Step 3: Annotation ***@HystrixCommand***
+- We need to manage the endpoints for this use this config in yaml: (note below setting is not present in labs document hence dont forget to add this in portfolio service)
+````
+management:
+  endpoints:
+    web:
+      expose: 
+       beans,metrics
+````
+- Spring Boot - Actuator. Spring Boot Actuator includes a number of additional features to help you monitor and manage your application when it's pushed to production. You can choose to manage and monitor your application using HTTP or JMX endpoints.
+
+## FEIGN
+- we can configure declarative restful client i.e we dont need to write any logic to consume any rest api but just write an interface with required configuration/
+- Step 1 : add dependency
+- Step 2 : Write interface as belows for eg:
+````java
+@FeignClient(name="quotes-service",fallback=QuoteServiceCallback.class)
+public interface QuoteService {
+
+  @RequestMapping(value = "/quotes", method = RequestMethod.GET)
+	public ResponseEntity<List<Quote>> getQuotes(@RequestParam(value="q", required=false) String query)  ;
+	
+}
+```` 
+## Zuul
+- Zuul is an edge service that provides dynamic routing, monitoring, resiliency, security, and more. 
+- Routing is an integral part of a microservice architecture. For example, / may be mapped to your web application, /api/users is mapped to the user service and /api/shop is mapped to the shop service. Zuul is a JVM-based router and server-side load balancer from Netflix.
+- [Zuul Wiki](https://github.com/Netflix/zuul/wiki)
+
+## Config Server
+- If we have multiple services then we can have a common configuration repo (source control), condition is we should have the yml file with the service name i.e if service name is XYZservice then the config name will be XYZservice.yml
+- This repo can have a common application.yml which is common to all the services
+- We can have profile based configs as well like I want config for dev envt. and my microservice name is A then we can have 
+    - A.yml, (config specific to A microservice)
+    - A-dev.yml, (config specific to dev envt.)    
+    - application.yml (common config to all the microservices)
+- **Disadvantage** if the config server is down then our microservices wont be started ; pre-reqiusite is we need to have config server up-and-running before starting any microservice
