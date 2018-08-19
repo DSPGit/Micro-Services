@@ -112,7 +112,7 @@ So here Zuul will be the interface which will handle all the responsibilities i.
   - Spring boot parent doesnt have dependecy versions for spirng cloud api's hence we need to have different parent for spring cloud but we cannot have multiple parents in one pom so we add the cloud parent in <dependencyManagement> like below: 
 * [Spring cloud](http://projects.spring.io/spring-cloud/)
 
-````
+````xml
 <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
@@ -146,42 +146,42 @@ So here Zuul will be the interface which will handle all the responsibilities i.
 - this above annotation will bring all the required beans on client side
 - **default port of eureka is 8761**
 - By default behavior of eureka is that it will first fetch the registry from other eureka server, if you have only one ES then you need to override the default behavior by adding a property in application.yml
-````
+````yaml
 eureka:
   client:
     fetch-registry: false // no other ES hence value false
     register-with-eureka: false //there is no other ES to register with hence false; even if you have multiple ES but dont want to register
 ````
 - every service needs to register with the ES hence we need to add below code in application.yml of your service
-````
+````yaml
 eureka:
   client:
     service-url:
       z1: http://localhost:5001/eureka
 ````
 - how many eureka are there with the zones? configure this.
-````
+````yaml
 eureka:
   client:
     service-url:
       z1: http://localhost:5001/eureka
 ````
 - If we have no zones then use below:
-````
+````yaml
 eureka:
   client:
     service-url: 
       defaultZone: http://localhost:5001/eureka
 ````
 - By default the service will start on port 8080, but if the port is not available then we can add below code in yaml
-````
+````yaml
 server:
   port: 0 //0 means any random port available
 ````
 - if you want to have multiple instance of services then the application id is generated based on combination of
   **host:service-name:port**
 - this will make the id of the 2 service instances same, and eureka will show only one service in dashboard; hence you need to have different ids we need to make below changes: this code will generate random ids for each instance of service
-````
+````yaml
 eureka:
   instance:
     instance-id:${spring.application.name}:${random.value}
@@ -191,7 +191,7 @@ eureka:
 - In lease renewal: if the ES doesnt get the service reneval after its lease is expired it keeps on checking service and if 70% of the services dont renew (or dont provide heartbeat)then ES will go in **self preservation mode** and it will wake up automatically once it starts getting heartbeats.
 - This threshold of 70% is set by Netflix and is not configurable.
 - we can disable self preservation mode by using:
-````
+````yaml
 eureka:
   server:
     enable-self-preservation: false
@@ -208,11 +208,11 @@ eureka:
 - Ribbon is used as load balancer
 - Ribbon by default uses DynamicServerListLoadBalancer for load balancing which can be configured
 - To simplify code we can use restTemplate with **interceptors**
-````
+````java
 Use @LoadBalancer annotation
 ````
 - if one of the service replica is down then the loadbalancer keeps on hitting the lost one and the alive ones alternatively and the response we get from lost service is 404, to avoid this our loadbalancer should keep on retrying and not show 404, ***Spring provides one api called SPRING RETRY*** 
-````
+````xml
 <dependency>
     <groupId>org.springframework.retry</groupId>
     <artifactId>spring-retry</artifactId>
@@ -220,7 +220,7 @@ Use @LoadBalancer annotation
 </dependency>
 ````
 - Spring retry api inbuilt uses DynamicServerListLoadBalancer (which is configurable) and if the service is down then it will lookup the registry and hit the live service. The retry and timeout is configurable as below:
-````
+````yaml
 spring:
   cloud:
     loadbalancer:
@@ -228,7 +228,7 @@ spring:
         enabled: true
 ````
 -  you can configure the no. of retry's for a specifc service using below config:
-````
+````yaml
 quotes-service: //this is the name of the service
   ribbon:
     ReadTimeout: 1000 // server is up, connection is successful but server is not responding in specified time, in our case its 1sec
@@ -254,7 +254,7 @@ quotes-service: //this is the name of the service
   - Step 2: Annotation ***@EnableHystrix***
   - Step 3: Annotation ***@HystrixCommand***
 - We need to manage the endpoints for this use this config in yaml: (note below setting is not present in labs document hence dont forget to add this in portfolio service)
-````
+````yaml
 management:
   endpoints:
     web:
@@ -276,11 +276,6 @@ public interface QuoteService {
 	
 }
 ```` 
-## Zuul
-- Zuul is an edge service that provides dynamic routing, monitoring, resiliency, security, and more. 
-- Routing is an integral part of a microservice architecture. For example, / may be mapped to your web application, /api/users is mapped to the user service and /api/shop is mapped to the shop service. Zuul is a JVM-based router and server-side load balancer from Netflix.
-- [Zuul Wiki](https://github.com/Netflix/zuul/wiki)
-
 ## Config Server
 - If we have multiple services then we can have a common configuration repo (source control), condition is we should have the yml file with the service name i.e if service name is XYZservice then the config name will be XYZservice.yml
 - This repo can have a common application.yml which is common to all the services
@@ -289,3 +284,105 @@ public interface QuoteService {
     - A-dev.yml, (config specific to dev envt.)    
     - application.yml (common config to all the microservices)
 - **Disadvantage** if the config server is down then our microservices wont be started ; pre-reqiusite is we need to have config server up-and-running before starting any microservice
+
+# DAY 4: OAuth2/Zuul (gateway)
+## Zuul
+- Zuul is an edge service that provides dynamic routing, monitoring, resiliency, security, and more. 
+- Routing is an integral part of a microservice architecture. For example, / may be mapped to your web application, /api/users is mapped to the user service and /api/shop is mapped to the shop service. Zuul is a JVM-based router and server-side load balancer from Netflix.
+- [Zuul Wiki](https://github.com/Netflix/zuul/wiki)
+- To expose an internal services, we use a proxy where 3rd party will hit the proxy(which will lookup eureka, and hit the service using ribbon lb).
+- this proxy should also have config for blacklist and whitelist services and when request to blackliosted service comes it should block the request.
+- this proxy acts as gateway btwn 3rd part and your services.
+- We can then have another service which is exposed to the proxy and that service can internally call the services for request made by proxy.
+- this service is called as orchestrated service.
+- for this gateway we can use **Netflix Zuul!**.
+- zuul acts as service side LB where only external request will be managed by zuul and not the internal request.
+- While accessing the internal services zuul wil have to know the service name, however we dont want to expose the real name of service hence we need to configure alias for the service using below code in bootstrap.yml
+````yaml
+zuul:
+ routes:
+    quotes-service: /qs/*
+    portfolio-service: /ps/** //double ** is for multiple elements
+````
+- in above config when the external service hits url with alias **/qs/** then it will be routed to **quote-service** automatically.
+- we can ignore or blacklist the services from zuul for this we have to use below config: below config will ignore requests for quotes service
+````yaml
+zuul:
+  prefix: /api
+  ignored-services:
+    quotes-service //(comma seperated service names) 
+````
+### Zuul Filters
+- Just write a class which extends **ZuulFilter** and override ***run()***
+````java
+package com.way2learnonline;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Component;
+
+import com.netflix.zuul.ZuulFilter;
+import com.netflix.zuul.context.RequestContext;
+
+@Component
+public class LoggingZuulFilter extends ZuulFilter {
+
+	@Override
+	public Object run() {
+		 RequestContext ctx = RequestContext.getCurrentContext();
+	        HttpServletRequest request = ctx.getRequest();
+
+	       System.err.println(String.format("%s request to %s", request.getMethod(), request.getRequestURL().toString()));
+	        return null;
+	}
+
+	@Override
+	public boolean shouldFilter() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public int filterOrder() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public String filterType() {
+		// TODO Auto-generated method stub
+		return "pre";
+	}
+
+}
+````
+### OAuth2 (Spring Security)
+- Authentication
+- Authorization
+- Session
+- Cross-Site Request Forgery (CSRF)
+- Cross-origin resource sharing (CORS)
+- Logout
+- In spring security we need to do below config in security.xml in web-app/WEB-INF
+````xml
+<security:authentication-manager>
+	<security:authentication-provider>	
+			<security:user-service>				
+			<security:user name="siva" password="secret" authorities="ROLE_ADMIN"/>
+		</security:user-service>
+	</security:authentication-provider>	
+</security:authentication-manager> 
+````
+- and for security filters add below snippet
+````xml
+<security:http auto-config="true" use-expressions="true">
+	<security:intercept-url pattern="/**" access="hasRole('ROLE_ADMIN')"/>
+</security:http>
+````
+- after adding above config for any page access user will be prompted for login as we have mentioned ***pattern="/**"***
+- 
+
+#### Deligating filter proxy (DFP)
+- Servlet filter need to configure in web.xml
+- [AuthenticationManagerBuilder](https://docs.spring.io/spring-security/site/docs/4.2.5.RELEASE/apidocs/org/springframework/security/config/annotation/authentication/builders/AuthenticationManagerBuilder.html)
+
