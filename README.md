@@ -380,7 +380,6 @@ public class LoggingZuulFilter extends ZuulFilter {
 </security:http>
 ````
 - after adding above config for any page access user will be prompted for login as we have mentioned ***pattern="/**"***
-- 
 
 #### Deligating filter proxy (DFP)
 - Servlet filter need to configure in web.xml
